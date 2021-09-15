@@ -1,68 +1,87 @@
 package main
 
 import (
-	"encoding/json"
-	"io/ioutil"
-	"log"
-	"net/http"
+	"ejerciogo/step2/model"
 
 	"github.com/gin-gonic/gin"
-)
 
+	"log"
+
+	"encoding/json"
+	"net/http"
+)
 
 func main() {
 	router := gin.Default()
 
 	router.GET("/myapi", func(c *gin.Context) {
-		data := c.DefaultQuery("data","")
 
-		resp, err := http.Get("https://jsonplaceholder.typicode.com/posts/1")
+		vCrypto := c.DefaultQuery("crypto", "ForcePartial")
+
+		crypto, err := FetchCrypto(vCrypto)
+
 		if err != nil {
-		   log.Fatalln(err)
+			log.Println(err)
+			vCurrencyPartial := model.CotacaoMoedaResponsePartial{Id: vCrypto, Partial: "true"}
+			c.JSON(206, vCurrencyPartial)
+		} else {
+
+			list := make(model.Cryptoresponse, 0, len(crypto))
+			list = append(list, crypto...)
+
+			var vCurrency model.CotacaoMoedaResponse
+			for _, v := range list {
+				vCurrency = model.CotacaoMoedaResponse{
+					Id: v.Id,
+					Content: model.ContentCotacaoMoeda{
+						Price:    v.Price,
+						Currency: v.Currency,
+					},
+					Partial: "false",
+				}
+			}
+
+			if vCurrency.Id == "" {
+				log.Println("Content Empty - Return Partial")
+				vCurrencyPartial := model.CotacaoMoedaResponsePartial{Id: vCrypto, Partial: "true"}
+				c.JSON(206, vCurrencyPartial)
+			} else {
+				c.JSON(200, vCurrency)
+			}
+
 		}
-	 //We Read the response body on the line below.
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-		   log.Fatalln(err)
-		}
-	 //Convert the body to type string
-		sb := string(body)
-		
-		// c.STRING
-		
-		// type StructRespJson struct {
-		// 	userid string `json:"userId"`
-		// 	id string `json:"id"`
-		// 	title string `json:"title"`
-		// 	body string `json:"body"`
-		// }
-
-		// var respbody StructRespJson{
-		
-		// }
-
-		// responsejson := json.Marshal()
-
-		c.STRING(200, sb)
-
-		// c.JSON(200, responsejson)
-
-
-		// var dataresponsejson = DataResponseJson{data}
-
-		// c.JSON(200, dataresponsejson)
 
 	})
 
 	router.Run(":8080")
+}
 
+//Fetch is exported ...
+// func FetchCrypto(fiat string, crypto string) (string, error) {
+func FetchCrypto(crypto string) (model.Cryptoresponse, error) {
+
+	// tempCrypto := "BTC"
+
+	//Build The URL string
+	URL := "https://api.nomics.com/v1/currencies/ticker?key=3990ec554a414b59dd85d29b2286dd85&interval=1d&ids=" + crypto
+	// URL := "https://api.nomics.com/v1/currencies/ticker?key=3990ec554a414b59dd85d29b2286dd85&interval=1d&ids=" + tempCrypto
+
+	log.Printf(URL)
+
+	//We make HTTP request using the Get function
+	resp, err := http.Get(URL)
+	if err != nil {
+		log.Printf("ooopsss! erro na chamada da API")
+		return nil, err
 	}
-
-	func HttpGet (url string) *http.Response{
-		resp, err := http.Get(url)
-		if err != nil {
-		   log.Fatalln(err)
-		}
-
-	 	return resp
+	defer resp.Body.Close()
+	//Create a variable of the same type as our model
+	var cResp model.Cryptoresponse
+	//Decode the data
+	if err := json.NewDecoder(resp.Body).Decode(&cResp); err != nil {
+		log.Printf("ooopsss! erro no decode")
+		return nil, err
 	}
+	//Invoke the text output function & return it with nil as the error value
+	return cResp, nil
+}
