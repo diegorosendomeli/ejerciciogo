@@ -2,7 +2,6 @@ package main
 
 import (
 	"ejerciogo/step2/model"
-	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -27,7 +26,7 @@ func main() {
 
 		vListCrypto := strings.Split(vCryptos, ",")
 		var flagPartial bool = false
-		var vResponse [3]model.CotacaoMoedaResponse
+		var vResponse []model.CotacaoMoedaResponse
 
 		if flagconcurrency == "S" {
 
@@ -35,37 +34,36 @@ func main() {
 
 			var wg sync.WaitGroup    //cria WaitGroup
 			wg.Add(len(vListCrypto)) //configura qtde de goroutines
-			for i, vCrypto := range vListCrypto {
+			cCurrency := make(chan model.CotacaoMoedaResponse, len(vListCrypto))
 
-				cCurrency := make(chan model.CotacaoMoedaResponse)
+			for _, vCrypto := range vListCrypto {
 				go func() {
 					defer wg.Done()
-
 					callApiCrypto(vCrypto, cCurrency)
-
-					log.Println(i)
 				}()
-				vResponse[i] = <-cCurrency
-				if vResponse[i].Partial == "true" {
-					flagPartial = true
-				}
 			}
 
-			go func() {
-				wg.Wait()
-			}()
+			wg.Wait()
+
+			for i := 0; i < len(vListCrypto); i++ {
+				vResp := <-cCurrency
+				if vResp.Partial == "true" {
+					flagPartial = true
+				}
+				vResponse = append(vResponse, vResp)
+			}
 
 		} else {
 			// Executa sem Goroutines
 
-			for i, vCrypto := range vListCrypto {
-				time.Sleep(time.Duration(i*2) * time.Millisecond)
-				vResponse[i], _ = callApiCryptoNoConcurrency(vCrypto)
-				if vResponse[i].Partial == "true" {
+			for _, vCrypto := range vListCrypto {
+				var vResp model.CotacaoMoedaResponse
+				vResp, _ = callApiCryptoNoConcurrency(vCrypto)
+				if vResp.Partial == "true" {
 					flagPartial = true
 				}
+				vResponse = append(vResponse, vResp)
 			}
-
 		}
 
 		if flagPartial {
