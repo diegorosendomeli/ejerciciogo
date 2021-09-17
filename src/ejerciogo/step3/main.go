@@ -10,6 +10,11 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+
+	"sync"
+	"time"
+
+	"io/ioutil"
 )
 
 func main() {
@@ -19,19 +24,28 @@ func main() {
 
 		vCryptos := c.DefaultQuery("cryptos", "ForcePartial")
 
-		vListCrypto := strings.Split(vCryptos, "")
+		vListCrypto := strings.Split(vCryptos, ",")
 
 		// var vResponse model.ResponseListCotacao
 		var vResponse [3]model.CotacaoMoedaResponse
 
+		var wg sync.WaitGroup    //cria WaitGroup
+		wg.Add(len(vListCrypto)) //configura qtde de goroutines
 		for i, vCrypto := range vListCrypto {
-			vCurrency, _ := callApiCrypto(vCrypto)
-			vResponse[i] = vCurrency
+			c := make(chan model.CotacaoMoedaResponse)
+			go func() {
+				defer wg.Done()
+				time.Sleep(time.Duration(i*2) * time.Millisecond)
 
-			//// PASSEI PRA FUNC E PAROU DE FUNCIONAR... DANDO TIMEOUT... VERIFICAR
-			///// ADICIONAR CONCONRRENCIA
-
+				callApiCrypto(vCrypto, c)
+				log.Println(i)
+			}()
+			vResponse[i] = <-c
 		}
+
+		go func() {
+			wg.Wait()
+		}()
 
 		c.JSON(http.StatusOK, vResponse)
 
@@ -40,7 +54,7 @@ func main() {
 	router.Run(":8080")
 }
 
-func callApiCrypto(vCrypto string) (model.CotacaoMoedaResponse, error) {
+func callApiCrypto(vCrypto string, c chan model.CotacaoMoedaResponse) {
 	crypto, err := FetchCrypto(vCrypto)
 
 	var vCurrency model.CotacaoMoedaResponse
@@ -74,15 +88,13 @@ func callApiCrypto(vCrypto string) (model.CotacaoMoedaResponse, error) {
 
 	}
 
-	return vCurrency, nil
+	c <- vCurrency
 
 }
 
 //Fetch is exported ...
 // func FetchCrypto(fiat string, crypto string) (string, error) {
 func FetchCrypto(crypto string) (model.Cryptoresponse, error) {
-
-	// tempCrypto := "BTC"
 
 	//Build The URL string
 	URL := "https://api.nomics.com/v1/currencies/ticker?key=3990ec554a414b59dd85d29b2286dd85&interval=1d&ids=" + crypto
@@ -97,13 +109,22 @@ func FetchCrypto(crypto string) (model.Cryptoresponse, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	//Create a variable of the same type as our model
-	var cResp model.Cryptoresponse
-	//Decode the data
-	if err := json.NewDecoder(resp.Body).Decode(&cResp); err != nil {
-		log.Printf("ooopsss! erro no decode")
+
+	// Passo(01) lendo o json do response do http request e transforma em Array de Bytes
+	responseJson, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("ooopsss! erro ao criar array de bytes do Response")
 		return nil, err
 	}
+
+	// Passo(02) converte array de bytes em uma struct
+	var dadosJason model.Cryptoresponse
+	err = json.Unmarshal(responseJson, &dadosJason)
+	if err != nil {
+		log.Printf("ooopsss! erro ao realizar unmarshall do response")
+		return nil, err
+	}
+
 	//Invoke the text output function & return it with nil as the error value
-	return cResp, nil
+	return dadosJason, nil
 }
