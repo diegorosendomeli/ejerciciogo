@@ -2,6 +2,7 @@ package main
 
 import (
 	"ejerciogo/step2/model"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -12,7 +13,6 @@ import (
 	"strings"
 
 	"sync"
-	"time"
 
 	"io/ioutil"
 )
@@ -23,38 +23,64 @@ func main() {
 	router.GET("/myapi", func(c *gin.Context) {
 
 		vCryptos := c.DefaultQuery("cryptos", "ForcePartial")
+		flagconcurrency := strings.ToUpper(c.DefaultQuery("concurrency", "S"))
 
 		vListCrypto := strings.Split(vCryptos, ",")
-
-		// var vResponse model.ResponseListCotacao
+		var flagPartial bool = false
 		var vResponse [3]model.CotacaoMoedaResponse
 
-		var wg sync.WaitGroup    //cria WaitGroup
-		wg.Add(len(vListCrypto)) //configura qtde de goroutines
-		for i, vCrypto := range vListCrypto {
-			c := make(chan model.CotacaoMoedaResponse)
-			go func() {
-				defer wg.Done()
-				time.Sleep(time.Duration(i*2) * time.Millisecond)
+		if flagconcurrency == "S" {
 
-				callApiCrypto(vCrypto, c)
-				log.Println(i)
+			// Executa com Goroutines
+
+			var wg sync.WaitGroup    //cria WaitGroup
+			wg.Add(len(vListCrypto)) //configura qtde de goroutines
+			for i, vCrypto := range vListCrypto {
+
+				cCurrency := make(chan model.CotacaoMoedaResponse)
+				go func() {
+					defer wg.Done()
+
+					callApiCrypto(vCrypto, cCurrency)
+
+					log.Println(i)
+				}()
+				vResponse[i] = <-cCurrency
+				if vResponse[i].Partial == "true" {
+					flagPartial = true
+				}
+			}
+
+			go func() {
+				wg.Wait()
 			}()
-			vResponse[i] = <-c
+
+		} else {
+			// Executa sem Goroutines
+
+			for i, vCrypto := range vListCrypto {
+				time.Sleep(time.Duration(i*2) * time.Millisecond)
+				vResponse[i], _ = callApiCryptoNoConcurrency(vCrypto)
+				if vResponse[i].Partial == "true" {
+					flagPartial = true
+				}
+			}
+
 		}
 
-		go func() {
-			wg.Wait()
-		}()
-
-		c.JSON(http.StatusOK, vResponse)
+		if flagPartial {
+			c.JSON(http.StatusPartialContent, vResponse)
+		} else {
+			c.JSON(http.StatusOK, vResponse)
+		}
 
 	})
 
 	router.Run(":8080")
 }
 
-func callApiCrypto(vCrypto string, c chan model.CotacaoMoedaResponse) {
+func callApiCrypto(vCrypto string, cCurrency chan model.CotacaoMoedaResponse) {
+
 	crypto, err := FetchCrypto(vCrypto)
 
 	var vCurrency model.CotacaoMoedaResponse
@@ -63,14 +89,11 @@ func callApiCrypto(vCrypto string, c chan model.CotacaoMoedaResponse) {
 		vCurrency = model.CotacaoMoedaResponse{Id: vCrypto, Partial: "true"}
 
 	} else {
-
 		list := make(model.Cryptoresponse, 0, len(crypto))
 		list = append(list, crypto...)
 
 		for _, v := range list {
-
 			if v.Id != "" {
-				//partial=false
 				vCurrency = model.CotacaoMoedaResponse{
 					Id: v.Id,
 					Content: &model.ContentCotacaoMoeda{
@@ -81,28 +104,52 @@ func callApiCrypto(vCrypto string, c chan model.CotacaoMoedaResponse) {
 				}
 
 			} else {
-				//partial=true
 				vCurrency = model.CotacaoMoedaResponse{Id: vCrypto, Partial: "true"}
 			}
 		}
 
 	}
+	cCurrency <- vCurrency
+}
 
-	c <- vCurrency
+func callApiCryptoNoConcurrency(vCrypto string) (model.CotacaoMoedaResponse, error) {
+	crypto, err := FetchCrypto(vCrypto)
+
+	var vCurrency model.CotacaoMoedaResponse
+	if err != nil {
+		log.Println(err)
+		vCurrency = model.CotacaoMoedaResponse{Id: vCrypto, Partial: "true"}
+	} else {
+
+		list := make(model.Cryptoresponse, 0, len(crypto))
+		list = append(list, crypto...)
+
+		for _, v := range list {
+
+			if v.Id != "" {
+				vCurrency = model.CotacaoMoedaResponse{
+					Id: v.Id,
+					Content: &model.ContentCotacaoMoeda{
+						Price:    v.Price,
+						Currency: v.Currency,
+					},
+					Partial: "false",
+				}
+
+			} else {
+				vCurrency = model.CotacaoMoedaResponse{Id: vCrypto, Partial: "true"}
+			}
+		}
+	}
+
+	return vCurrency, nil
 
 }
 
-//Fetch is exported ...
-// func FetchCrypto(fiat string, crypto string) (string, error) {
 func FetchCrypto(crypto string) (model.Cryptoresponse, error) {
 
-	//Build The URL string
 	URL := "https://api.nomics.com/v1/currencies/ticker?key=3990ec554a414b59dd85d29b2286dd85&interval=1d&ids=" + crypto
-	// URL := "https://api.nomics.com/v1/currencies/ticker?key=3990ec554a414b59dd85d29b2286dd85&interval=1d&ids=" + tempCrypto
 
-	log.Printf(URL)
-
-	//We make HTTP request using the Get function
 	resp, err := http.Get(URL)
 	if err != nil {
 		log.Printf("ooopsss! erro na chamada da API")
@@ -125,6 +172,5 @@ func FetchCrypto(crypto string) (model.Cryptoresponse, error) {
 		return nil, err
 	}
 
-	//Invoke the text output function & return it with nil as the error value
 	return dadosJason, nil
 }
