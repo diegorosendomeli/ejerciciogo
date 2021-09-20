@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="@v3">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/pkg/mod/cache/download/github.com/leodido/go-urn/@v/v1.2.0.zip!/" />
+      <root url="jar://$PROJECT_DIR$/pkg/mod/cache/download/github.com/leodido/go-urn/@v/v1.2.1.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

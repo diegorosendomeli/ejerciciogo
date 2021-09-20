@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="v3.9.0">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/pkg/mod/cache/download/github.com/newrelic/go-agent/v3/@v/v3.9.0.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

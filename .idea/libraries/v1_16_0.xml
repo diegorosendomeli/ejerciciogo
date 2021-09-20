@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="v1.16.0">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/pkg/mod/cache/download/go.uber.org/zap/@v/v1.16.0.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

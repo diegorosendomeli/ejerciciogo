@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="@v17">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/pkg/mod/cache/download/github.com/modern-go/concurrent/@v/v0.0.0-20180228061459-e0a39a4cb421.zip!/" />
+      <root url="jar://$PROJECT_DIR$/pkg/mod/cache/download/github.com/modern-go/concurrent/@v/v0.0.0-20180306012644-bacd9c7ef1dd.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

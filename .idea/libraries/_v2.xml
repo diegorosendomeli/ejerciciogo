@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="@v2">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/pkg/mod/cache/download/github.com/ugorji/go/codec/@v/v1.1.7.zip!/" />
+      <root url="jar://$PROJECT_DIR$/pkg/mod/cache/download/github.com/ugorji/go/codec/@v/v1.2.6.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="@v13">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/pkg/mod/cache/download/github.com/go-playground/locales/@v/v0.14.0.zip!/" />
+      <root url="jar://$PROJECT_DIR$/pkg/mod/cache/download/github.com/go-playground/locales/@v/v0.13.0.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

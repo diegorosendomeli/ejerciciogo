@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="@v11">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/pkg/mod/cache/download/golang.org/x/crypto/@v/v0.0.0-20200622213623-75b288015ac9.zip!/" />
+      <root url="jar://$PROJECT_DIR$/pkg/mod/cache/download/golang.org/x/crypto/@v/v0.0.0-20210711020723-a769d52b0f97.zip!/" />
+      <root url="jar://$PROJECT_DIR$/pkg/mod/cache/download/golang.org/x/crypto/@v/v0.0.0-20210817164053-32db794688a5.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

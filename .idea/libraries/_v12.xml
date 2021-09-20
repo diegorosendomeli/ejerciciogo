@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="@v12">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/pkg/mod/cache/download/github.com/stretchr/testify/@v/v1.7.0.zip!/" />
+      <root url="jar://$PROJECT_DIR$/pkg/mod/cache/download/github.com/stretchr/testify/@v/v1.4.0.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

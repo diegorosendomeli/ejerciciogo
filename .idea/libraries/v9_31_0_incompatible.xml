@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="v9.31.0+incompatible">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/pkg/mod/cache/download/github.com/go-playground/validator/@v/v9.31.0+incompatible.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
